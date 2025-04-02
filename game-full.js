@@ -1,13 +1,12 @@
-// Whack-a-Whale Game - Workshop Version
-// This file contains TODO exercises for participants to complete
+// Simplified Whack-a-Mole Game Implementation
 
 // Constants
-let GAME_TIME =  60; // Game duration in seconds
-let MOLE_COUNT =  6;  // Number of moles/holes in the game
-let MOLE_SPAWN_MIN_TIME =  0.8;  // Minimum time between mole spawns (seconds)
-let MOLE_SPAWN_MAX_TIME =  2.0;  // Maximum time between mole spawns (seconds)
-let MOLE_STAY_MIN_TIME =  0.5;   // Minimum time a mole stays up (seconds)
-let MOLE_STAY_MAX_TIME =  1.5;   // Maximum time a mole stays up (seconds)
+const GAME_TIME = 60; // Game duration in seconds
+const MOLE_COUNT = 6;  // Number of moles/holes in the game
+const MOLE_SPAWN_MIN_TIME = 0.8;  // Minimum time between mole spawns (seconds)
+const MOLE_SPAWN_MAX_TIME = 2.0;  // Maximum time between mole spawns (seconds)
+const MOLE_STAY_MIN_TIME = 0.5;   // Minimum time a mole stays up (seconds)
+const MOLE_STAY_MAX_TIME = 1.5;   // Maximum time a mole stays up (seconds)
 
 // Main game layer
 var GameLayer = cc.Layer.extend({
@@ -17,12 +16,12 @@ var GameLayer = cc.Layer.extend({
     whales: [],
     holePositions: [
         // These are the hole positions based on the background image
-        {x: 146, y:204},  
-        {x: 512, y: 204},  
-        {x: 878, y: 204},  
-        {x: 146, y: 490},  
-        {x: 512, y: 490},  
-        {x: 878, y: 490}   
+        {x: 146, y: 304}, // top-left
+        {x: 512, y: 304}, // top-center
+        {x: 878, y: 304}, // top-right
+        {x: 146, y: 590}, // bottom-left
+        {x: 512, y: 590}, // bottom-center
+        {x: 878, y: 590}  // bottom-right
     ],
     scoreLabel: null,
     timerLabel: null,
@@ -39,13 +38,12 @@ var GameLayer = cc.Layer.extend({
         this.initBackground(); 
         this.initUI();
         
-        // Enable touch/mouse events using cc.eventManager
-        cc.eventManager.addListener({
-            event: cc.EventListener.TOUCH_ONE_BY_ONE,
-            swallowTouches: true,
-            onTouchBegan: this.onTouchBegan.bind(this)
-        }, this);
-        
+       // Enable touch/mouse events using cc.eventManager
+       cc.eventManager.addListener({
+        event: cc.EventListener.TOUCH_ONE_BY_ONE,
+        swallowTouches: true,
+        onTouchBegan: this.onTouchBegan.bind(this)
+    }, this);
         // Schedule game updates
         this.scheduleUpdate();
         
@@ -71,18 +69,26 @@ var GameLayer = cc.Layer.extend({
     
     // Initialize whales (our "moles")
     initWhales: function() {
-        // TODO EXERCISE 1: Initialize the whale sprites
-        // Loop through the hole positions and create whale sprites
-        // Each whale should:
-        //  - Use the whale image from resources
-        //  - Have a random scale between 0.15 and 0.25
-        //  - Be positioned at the hole position but hidden initially
-        //  - Have active = false
-        //  - Store its holeIndex
-        //  - Be added to both the scene and the whales array
-        
-        // YOUR CODE HERE
-        
+        for (var i = 0; i < this.holePositions.length; i++) {
+            var position = this.holePositions[i];
+            const mappedPosition = cc.p(position.x, cc.winSize.height - position.y);
+            position = mappedPosition; 
+            // Create a whale sprite
+            var whale = new cc.Sprite(res.whale);
+            
+            // Scale whale to appropriate size
+            whale.setScale(Math.random()*(0.25-0.15)+0.15);
+            whale.setAnchorPoint(0.5,0.5);
+            // Position whale below the hole (hidden initially)
+            whale.setPosition(position.x, position.y -50);
+            whale.setVisible(false);
+            whale.active = false;
+            whale.holeIndex = i;
+            
+            // Add whale to the scene
+            this.addChild(whale, 2);
+            this.whales.push(whale);
+        }
     },
     
     // Initialize UI elements
@@ -90,14 +96,14 @@ var GameLayer = cc.Layer.extend({
         // Score display
         var scoreText = new cc.LabelTTF("Score: 0", "Arial", 30);
         scoreText.setPosition(120, this.winSize.height - 400);
-        scoreText.setColor(cc.color(255, 255, 255));
+        scoreText.setColor(cc.color(0, 0, 0));
         this.addChild(scoreText, 10);
         this.scoreLabel = scoreText;
         
         // Timer display
         var timerText = new cc.LabelTTF("Time: " + GAME_TIME, "Arial", 30);
         timerText.setPosition(this.winSize.width - 120, this.winSize.height  - 400);
-        timerText.setColor(cc.color(255, 255, 255));
+        timerText.setColor(cc.color(0, 0, 0));
         this.addChild(timerText, 10);
         this.timerLabel = timerText;
     },
@@ -114,17 +120,30 @@ var GameLayer = cc.Layer.extend({
     
     // Check if a whale was hit
     checkWhaleHit: function(position) {
-        // TODO EXERCISE 2: Implement whale hit detection
-        // This function should:
-        //  - Check each whale to see if it was hit by the touch position
-        //  - If a whale is hit AND active, increase score and show animation
-        //  - Call hideWhale() to hide the whale that was hit
-        //  - Increase score by 10 if the whale is hit 
-        //  - Return true if a whale was hit, false otherwise
+        var hit = false;
         
-        // YOUR CODE HERE
+        // Check each whale
+        for (var i = 0; i < this.whales.length; i++) {
+            var whale = this.whales[i];
+            
+            // If whale is active and hit
+            if (whale.active && this.isPointInSprite(position, whale)) {
+                // Add to score
+                this.score += 10;
+                this.scoreLabel.setString("Score: " + this.score);
+                
+                // Create score popup animation
+                this.createScorePopup(position, "+10");
+                
+                // Hide whale immediately
+                this.hideWhale(whale);
+                
+                hit = true;
+                break;
+            }
+        }
         
-        return false; // Change this when implementing the function
+        return hit;
     },
     
     // Check if a point is inside a sprite
@@ -192,18 +211,40 @@ var GameLayer = cc.Layer.extend({
     
     // Make a whale appear
     spawnWhale: function() {
-        // TODO EXERCISE 3: Implement the whale spawning logic
-        // This function should:
-        //  - Check if the game is active
-        //  - Find available (inactive) whales
-        //  - Select a random whale to appear
-        //  - Position the whale and make it visible
-        //  - Animate the whale appearing (moving up and scaling)
-        //  - Set the whale to active state when animation completes
-        //  - Schedule the whale to disappear after a random time
+        if (!this.gameActive) return;
         
-        // YOUR CODE HERE
+        // Find all inactive whales
+        var availableWhales = this.whales.filter(whale => !whale.active);
         
+        // If no whales available, return
+        if (availableWhales.length === 0) return;
+        
+        // Select random whale
+        var randomIndex = Math.floor(Math.random() * availableWhales.length);
+        var whale = availableWhales[randomIndex];
+        var holePosition = this.holePositions[whale.holeIndex];
+        
+        // Position whale at hole position but below
+        whale.setPosition(holePosition.x, holePosition.y -200);
+        whale.setVisible(true);
+        const scale =whale.getScale(); 
+        whale.setScale(0.01); 
+        // Animate whale appearing
+        var moveUp = cc.moveTo(0.2, cc.p(holePosition.x, holePosition.y-100));
+        var scaleTo = cc.scaleTo(0.2,scale); 
+        var enableHit = cc.callFunc(function() {
+            whale.active = true;
+        });
+        
+        whale.runAction(cc.sequence(cc.spawn(moveUp, scaleTo), enableHit));
+        
+        // Schedule whale to disappear
+        var stayTime = Math.random() * (MOLE_STAY_MAX_TIME - MOLE_STAY_MIN_TIME) + MOLE_STAY_MIN_TIME;
+        this.scheduleOnce(function() {
+            if (whale.active) {
+                this.hideWhale(whale);
+            }
+        }.bind(this), stayTime);
     },
     
     // Hide a whale
@@ -245,16 +286,37 @@ var GameLayer = cc.Layer.extend({
     
     // Show game over screen
     showGameOver: function() {
-        // TODO EXERCISE 4: Implement the game over screen
-        // This function should:
-        //  - Create a semi-transparent overlay
-        //  - Show "Game Over" text
-        //  - Display the final score
-        //  - Add a restart button or text
-        //  - Add a touch event listener to restart the game
+        // Create semi-transparent background
+        var dimLayer = new cc.LayerColor(cc.color(0, 0, 0, 150));
+        this.addChild(dimLayer, 20);
         
-        // YOUR CODE HERE
+        // Game over text
+        var gameOverText = new cc.LabelTTF("Game Over", "Arial Bold", 60);
+        gameOverText.setPosition(this.winSize.width / 2, this.winSize.height / 2 + 50);
+        gameOverText.setColor(cc.color(255, 50, 50));
+        dimLayer.addChild(gameOverText);
         
+        // Final score text
+        var finalScoreText = new cc.LabelTTF("Final Score: " + this.score, "Arial", 40);
+        finalScoreText.setPosition(this.winSize.width / 2, this.winSize.height / 2 - 20);
+        finalScoreText.setColor(cc.color(255, 255, 255));
+        dimLayer.addChild(finalScoreText);
+        
+        // Restart button text
+        var restartButton = new cc.LabelTTF("Tap to Restart", "Arial", 30);
+        restartButton.setPosition(this.winSize.width / 2, this.winSize.height / 2 - 100);
+        restartButton.setColor(cc.color(255, 255, 0));
+        dimLayer.addChild(restartButton);
+        
+        // Add touch event to restart
+        cc.eventManager.addListener({
+            event: cc.EventListener.TOUCH_ONE_BY_ONE,
+            swallowTouches: true,
+            onTouchBegan: function() {
+                cc.director.runScene(new GameScene());
+                return true;
+            }
+        }, dimLayer);
     },
     
     // Update method called every frame

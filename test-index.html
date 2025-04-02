@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Whack-a-Whale Game Test</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <!-- CSS styles -->
+    <style type="text/css">
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #222;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        
+        #gameCanvas {
+            border: 2px solid #333;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            width: 1024px;
+            height: 768px;
+        }
+        
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: Arial, sans-serif;
+            font-size: 24px;
+            color: #fff;
+        }
+        
+        .console {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            width: 400px;
+            height: 300px;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #0f0;
+            font-family: monospace;
+            font-size: 14px;
+            padding: 10px;
+            overflow-y: auto;
+            z-index: 1000;
+            border-radius: 5px;
+            display: 'block';
+        }
+        
+        .test-controls {
+            position: fixed;
+            top: 320px;
+            left: 10px;
+            width: 400px;
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 1000;
+        }
+        
+        button {
+            padding: 8px 16px;
+            margin: 5px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        button:hover {
+            background-color: #45a049;
+        }
+        
+        button.test-failed {
+            background-color: #f44336;
+        }
+        
+        button.test-passed {
+            background-color: #4CAF50;
+        }
+        
+        .toggle-console {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background-color: #2196F3;
+            z-index: 1001;
+        }
+    </style>
+</head>
+<body>
+    <div class="console" id="testConsole"></div>
+    
+    <button class="toggle-console" onclick="toggleConsole()">Toggle Console</button>
+    
+    <div class="test-controls">
+        <h3 style="color: white; margin-top: 0;">Test Controls</h3>
+        <button onclick="testInitWhales()">Test initWhales()</button>
+        <button onclick="testCheckWhaleHit()">Test checkWhaleHit()</button>
+        <button onclick="testSpawnWhale()">Test spawnWhale()</button>
+        <button onclick="testShowGameOver()">Test showGameOver()</button>
+        <button onclick="runGameTests()">Run All Tests</button>
+    </div>
+    
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas> 
+    </div>
+    
+    <!-- Cocos2d-js library file -->
+    <script src="libs/cocos2d-js-v3.13.js"></script>
+    
+    <!-- Game files -->
+    <script src="resource.js"></script>
+    <script src="game.js"></script>
+    
+    <!-- Test file -->
+    <script src="test-game.js"></script>
+    
+    <script>
+        // Custom console to display test results
+        (function() {
+            const consoleElement = document.getElementById('testConsole');
+            
+            // Store original console methods
+            const originalConsole = {
+                log: console.log,
+                error: console.error,
+                warn: console.warn
+            };
+            
+            // Override console methods
+            console.log = function() {
+                // Call original method
+                originalConsole.log.apply(console, arguments);
+                
+                // Add to our console element
+                const log = document.createElement('div');
+                log.textContent = Array.from(arguments).join(' ');
+                consoleElement.appendChild(log);
+                consoleElement.scrollTop = consoleElement.scrollHeight;
+            };
+            
+            console.error = function() {
+                // Call original method
+                originalConsole.error.apply(console, arguments);
+                
+                // Add to our console element with error styling
+                const log = document.createElement('div');
+                log.textContent = Array.from(arguments).join(' ');
+                log.style.color = '#f44336';
+                consoleElement.appendChild(log);
+                consoleElement.scrollTop = consoleElement.scrollHeight;
+            };
+            
+            console.warn = function() {
+                // Call original method
+                originalConsole.warn.apply(console, arguments);
+                
+                // Add to our console element with warning styling
+                const log = document.createElement('div');
+                log.textContent = Array.from(arguments).join(' ');
+                log.style.color = '#ff9800';
+                consoleElement.appendChild(log);
+                consoleElement.scrollTop = consoleElement.scrollHeight;
+            };
+        })();
+        
+        // Toggle console visibility
+        function toggleConsole() {
+            const consoleElement = document.getElementById('testConsole');
+            consoleElement.style.display = consoleElement.style.display === 'none' ? 'block' : 'none';
+        }
+        
+        // Update button status based on test results
+        function updateButtonStatus(functionName, passed) {
+            const buttons = document.querySelectorAll('button');
+            for (let i = 0; i < buttons.length; i++) {
+                if (buttons[i].textContent.includes(functionName)) {
+                    buttons[i].classList.remove('test-passed', 'test-failed');
+                    buttons[i].classList.add(passed ? 'test-passed' : 'test-failed');
+                    break;
+                }
+            }
+        }
+    </script>
+</body>
+</html>

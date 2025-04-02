@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "happy-dom": "^17.4.4"
   }
 }
